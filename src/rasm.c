@@ -11,6 +11,12 @@ int DEBUG = 0;
 
 int main(int argc, char** argv) {
 
+	if (argc != 3) {
+		printf("Usage:\n\t");
+		printf("rasm [input file] [output file]\n");
+		return 1;
+	}
+
 	FILE* file;
 	file = fopen(argv[1], "r");
 	if (!file) {
