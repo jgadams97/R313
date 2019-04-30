@@ -29,24 +29,28 @@ char* ReadLine(char* line, FILE* file) {
 
 	int len = 0;
 	char c = -1;
-	while (c != '\n') {
-		if (c != -1) {
+	fscanf(file, "%c", &c);
+	while (c != 0) {
+		if (c == -1 || c == 0 || c == 255) {
+			c = 0;
+			break;
+		} else {
 			len++;
 			line = realloc(line, len);
 			line[ len - 1 ] = c;
+			if (c == '\n') break;
 		}
-		if (fscanf(file, "%c", &c) == -1) {
-			c = -1;
-			break;
-		}
+		fscanf(file, "%c", &c);
 	}
 	len++;
 	line = realloc(line, len);
 	line [ len - 1 ] = 0;
 
-	if (c == -1) {
-		line[0] = -1;
+	if (c == 0) {
+		line[0] = 0;
 	}
+
+
 	return line;
 }
 
@@ -191,9 +195,8 @@ LabelList CalcLabels(FILE* file) {
 	int line_number = 1;
 	line = ReadLine(line, file);
 
-	while (line[0] != -1) {
+	while (line[0] != 0) {
 		line = TrimLine(line);
-
 		int line_len = strlen(line);
 		//if the line is a label, remember its position
 		if (line_len != 0) {
@@ -239,7 +242,7 @@ int CalcSize(FILE* file) {
 	int size = 0;
 	char* line;	
 	line = ReadLine(line, file);
-	while (line[0] != -1) {
+	while (line[0] != 0) {
 		line = TrimLine(line);
 
 		if (LineIsInstruction(line)) {
@@ -278,7 +281,6 @@ double evaluator_callback(double a, double b, char op) {
 }
 
 word* FinalAssemble(FILE* file, LabelList label_list) {
-
 	Evaluator ev = NewEvaluator(&evaluator_callback);
 	EvaluatorPush(&ev, '-', 2);
 	EvaluatorPush(&ev, '+', 2);
@@ -307,8 +309,7 @@ word* FinalAssemble(FILE* file, LabelList label_list) {
 	char* line;	
 	int line_number = 1;
 	line = ReadLine(line, file);
-	
-	while (line[0] != -1) {
+	while (line[0] != 0) {
 		line = TrimLine(line);
 		int line_len = strlen(line);
 
@@ -369,10 +370,12 @@ word* FinalAssemble(FILE* file, LabelList label_list) {
 		}
 		free(line);
 		line = ReadLine(line, file);
+
 		line_number++;
 	}
 	free(line);
 	FreeEvaluator(&ev);
+	
 	return buffer;
 
 }
@@ -384,7 +387,7 @@ Program Assemble(FILE* file) {
 	//things like a label named "label1" from being
 	//confused for a label named "label10"
 	LabelListSortBySize(&label_list);
-		
+
 	word* buffer = FinalAssemble(file, label_list);
 	Program p;
 	p.buffer = buffer;
